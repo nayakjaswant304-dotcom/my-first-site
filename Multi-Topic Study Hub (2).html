@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Topic Study Hub</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===================== GLOBAL THEME ===================== */
+:root{
+  --bg:#f0f2f5;
+  --accent:#1a73e8;
+  --accent-dark:#0f5bc4;
+  --card-bg:#ffffff;
+  --text:#20242c;
+  --muted:#5f6b7a;
+  --green:#2ea44f;
+  --red:#cb2431;
+  --gold:#e6a700;
+}
+*{box-sizing:border-box;}
+body{
+  margin:0;
+  min-height:100vh;
+  background:
+    radial-gradient(circle at 15% 10%,rgba(26,115,232,0.14),transparent 45%),
+    radial-gradient(circle at 85% 15%,rgba(255,138,101,0.14),transparent 45%),
+    radial-gradient(circle at 50% 95%,rgba(46,164,79,0.10),transparent 50%),
+    linear-gradient(160deg,#eef2f8,#e3e9f2 60%,#dbe3ee);
+  font-family:"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  color:var(--text);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:32px 16px;
+}
+h1,h2{font-family:"Poppins","Inter",sans-serif;}
+.app-card{
+  width:100%;
+  max-width:800px;
+  background:var(--card-bg);
+  border-radius:18px;
+  box-shadow:0 20px 45px rgba(20,30,60,0.14),0 2px 8px rgba(20,30,60,0.06);
+  padding:36px 32px 32px;
+  min-height:420px;
+  position:relative;
+  overflow:hidden;
+}
+.app-card::before{
+  content:"";
+  position:absolute;
+  top:0;left:0;right:0;
+  height:5px;
+  background:linear-gradient(90deg,var(--accent),#6fa8ff,#ff8a65);
+}
+h1{font-size:1.6rem;margin:0 0 24px;text-align:center;}
+h2{font-size:1.3rem;margin:0 0 20px;}
+.hidden{display:none !important;}
+button{font-family:inherit;cursor:pointer;}
+.btn{
+  border:none;
+  border-radius:10px;
+  padding:12px 20px;
+  font-size:1rem;
+  font-weight:600;
+  background:var(--accent);
+  color:#fff;
+  transition:background 0.2s ease,transform 0.15s ease;
+}
+.btn:hover{background:var(--accent-dark);transform:translateY(-1px);}
+.btn:active{transform:translateY(0);}
+.btn.secondary{
+  background:#e9edf2;
+  color:var(--text);
+}
+.btn.secondary:hover{background:#dbe1e8;}
+.back-row{margin-bottom:20px;}
+
+/* ===================== TOPIC GRID ===================== */
+.topic-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+  gap:16px;
+}
+.topic-tile{
+  border:2px solid #e3e7ee;
+  border-radius:16px;
+  background:#fafbfd;
+  padding:24px 14px;
+  text-align:center;
+  font-size:1.05rem;
+  font-weight:700;
+  transition:border-color 0.2s ease,transform 0.18s ease,box-shadow 0.2s ease,background 0.2s ease;
+  position:relative;
+}
+.topic-tile .emoji{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:52px;
+  height:52px;
+  margin:0 auto 10px;
+  font-size:1.6rem;
+  border-radius:50%;
+  background:var(--tile-color,#eaf2fe);
+  transition:transform 0.25s ease;
+}
+.topic-tile:hover{
+  border-color:var(--tile-accent,var(--accent));
+  transform:translateY(-5px) scale(1.02);
+  box-shadow:0 12px 24px rgba(20,30,60,0.12);
+  background:#fff;
+}
+.topic-tile:hover .emoji{transform:scale(1.12) rotate(-6deg);}
+
+/* ===================== MODE SCREEN ===================== */
+.mode-choices{display:flex;gap:16px;flex-wrap:wrap;}
+.mode-choices .btn{flex:1;min-width:180px;padding:18px;font-size:1.05rem;}
+
+/* ===================== FLASHCARDS ===================== */
+.progress-label{color:var(--muted);font-size:0.85rem;margin-bottom:8px;text-align:center;font-weight:600;}
+.progress-track{
+  height:6px;
+  background:#e9edf2;
+  border-radius:999px;
+  overflow:hidden;
+  margin:0 auto 22px;
+  max-width:600px;
+}
+.progress-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),#6fa8ff);
+  border-radius:999px;
+  transition:width 0.3s ease;
+}
+.flip-viewport{perspective:1200px;margin:0 auto 22px;max-width:600px;}
+.flip-card{
+  position:relative;
+  width:100%;
+  height:260px;
+  transform-style:preserve-3d;
+  transition:transform 0.5s cubic-bezier(.4,.2,.2,1);
+}
+.flip-card.is-flipped{transform:rotateY(180deg);}
+.flip-face{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  border-radius:14px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  text-align:center;
+  padding:24px;
+  font-size:1.15rem;
+  font-weight:600;
+  border:2px solid #e3e7ee;
+  background:#fafbfd;
+}
+.flip-face.back{
+  transform:rotateY(180deg);
+  background:#eaf2fe;
+  border-color:var(--accent);
+  color:var(--accent-dark);
+}
+.card-hint{color:var(--muted);font-size:0.8rem;text-align:center;margin-top:-10px;margin-bottom:18px;}
+.nav-row{display:flex;justify-content:space-between;gap:12px;}
+
+/* ===================== QUIZ ===================== */
+.question-box{
+  background:linear-gradient(135deg,#f5f8fd,#fafbfd);
+  border-left:4px solid var(--accent);
+  border-radius:12px;
+  padding:22px 24px;
+  font-size:1.1rem;
+  font-weight:600;
+  text-align:center;
+  margin-bottom:22px;
+  box-shadow:0 4px 14px rgba(20,30,60,0.05);
+}
+.options-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+}
+.option-btn{
+  border:2px solid #e3e7ee;
+  border-radius:12px;
+  background:#fff;
+  padding:14px 16px;
+  font-size:0.98rem;
+  font-weight:600;
+  color:var(--text);
+  box-shadow:0 2px 6px rgba(20,30,60,0.04);
+  transition:background 0.2s ease,border-color 0.2s ease,transform 0.15s ease,box-shadow 0.2s ease;
+  display:flex;
+  align-items:center;
+  gap:10px;
+  text-align:left;
+}
+.opt-letter{
+  flex-shrink:0;
+  width:26px;
+  height:26px;
+  border-radius:50%;
+  background:#eef1f5;
+  color:var(--muted);
+  font-size:0.8rem;
+  font-weight:800;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 0.2s ease,color 0.2s ease;
+}
+.option-btn:hover:not(:disabled){border-color:var(--accent);transform:translateY(-2px);box-shadow:0 6px 14px rgba(26,115,232,0.15);}
+.option-btn:hover:not(:disabled) .opt-letter{background:var(--accent);color:#fff;}
+.option-btn:disabled{cursor:default;}
+.option-btn.correct{background:var(--green);border-color:var(--green);color:#fff;animation:popCorrect 0.4s ease;}
+.option-btn.correct .opt-letter{background:rgba(255,255,255,0.3);color:#fff;}
+.option-btn.incorrect{background:var(--red);border-color:var(--red);color:#fff;animation:shakeWrong 0.4s ease;}
+.option-btn.incorrect .opt-letter{background:rgba(255,255,255,0.3);color:#fff;}
+@keyframes popCorrect{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
+@keyframes shakeWrong{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
+
+/* ===================== RESULTS ===================== */
+.results-wrap{text-align:center;animation:resultsIn 0.4s ease;}
+@keyframes resultsIn{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:translateY(0);}}
+.score-fraction{font-family:"Poppins",sans-serif;font-size:3rem;font-weight:800;margin:6px 0 4px;}
+.badge{
+  display:inline-block;
+  border-radius:999px;
+  padding:12px 22px;
+  font-weight:700;
+  font-size:1.05rem;
+  margin:14px 0 26px;
+  box-shadow:0 6px 16px rgba(20,30,60,0.08);
+}
+.badge.green{background:#e5f7ea;color:var(--green);}
+.badge.gold{background:#fff6e0;color:var(--gold);}
+.badge.red{background:#fdeaea;color:var(--red);}
+.results-actions{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-bottom:8px;}
+.ad-banner-space{
+  width:320px;
+  height:50px;
+  margin:28px auto 0;
+  background:linear-gradient(135deg,#ffb347,#ff6b6b);
+  border:none;
+  border-radius:8px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:0.8rem;
+  font-weight:700;
+  color:#fff;
+  letter-spacing:0.03em;
+  text-decoration:none;
+  box-shadow:0 4px 14px rgba(255,107,107,0.45);
+  transition:transform 0.2s ease,box-shadow 0.2s ease;
+  animation:adPulse 1.8s ease-in-out infinite;
+}
+.ad-banner-space:hover{
+  transform:translateY(-2px) scale(1.03);
+  box-shadow:0 6px 18px rgba(255,107,107,0.6);
+}
+@keyframes adPulse{
+  0%,100%{box-shadow:0 4px 14px rgba(255,107,107,0.45);}
+  50%{box-shadow:0 4px 20px rgba(255,179,71,0.7);}
+}
+
+.site-footer{
+  max-width:800px;
+  margin:20px auto 0;
+  text-align:center;
+  font-size:0.8rem;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* ===================== DARK MODE TOGGLE ===================== */
+.theme-toggle{
+  position:absolute;
+  top:16px;
+  right:16px;
+  width:38px;
+  height:38px;
+  border-radius:50%;
+  border:2px solid #e3e7ee;
+  background:#fafbfd;
+  font-size:1.1rem;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:background 0.2s ease,transform 0.2s ease,border-color 0.2s ease;
+}
+.theme-toggle:hover{transform:rotate(15deg) scale(1.05);border-color:var(--accent);}
+
+/* ===================== DARK MODE THEME ===================== */
+html.dark{
+  --bg:#11141a;
+  --card-bg:#1b1f27;
+  --text:#e8ebf0;
+  --muted:#98a2b3;
+}
+html.dark body{
+  background:
+    radial-gradient(circle at 15% 10%,rgba(26,115,232,0.16),transparent 45%),
+    radial-gradient(circle at 85% 15%,rgba(255,138,101,0.10),transparent 45%),
+    radial-gradient(circle at 50% 95%,rgba(46,164,79,0.08),transparent 50%),
+    linear-gradient(160deg,#12151c,#191d26 60%,#11141a);
+}
+html.dark .app-card{box-shadow:0 20px 45px rgba(0,0,0,0.45),0 2px 8px rgba(0,0,0,0.3);}
+html.dark .theme-toggle{background:#232833;border-color:#333a46;color:#f4c542;}
+html.dark .topic-tile,
+html.dark .flip-face,
+html.dark .option-btn{background:#232833;border-color:#333a46;}
+html.dark .flip-face.back{background:#1e2b40;color:#9cc4ff;}
+html.dark .question-box{background:linear-gradient(135deg,#232833,#1b1f27);}
+html.dark .opt-letter{background:#2d3340;color:#98a2b3;}
+html.dark .btn.secondary{background:#2d3340;color:var(--text);}
+html.dark .btn.secondary:hover{background:#39404f;}
+html.dark .progress-track{background:#2d3340;}
+html.dark .badge.green{background:#123321;}
+html.dark .badge.gold{background:#3a2e05;}
+html.dark .badge.red{background:#3a1416;}
+</style>
+</head>
+<body>
+<!-- ===================== APP CONTAINER ===================== -->
+<div class="app-card" id="appCard">
+<button id="themeToggle" class="theme-toggle" title="Toggle dark mode">🌙</button>
+
+  <!-- ===== SCREEN: TOPIC SELECTION ===== -->
+  <section id="screen-topics">
+    <h1>Select a Study Topic</h1>
+    <div class="topic-grid" id="topicGrid"></div>
+  </section>
+
+  <!-- ===== SCREEN: MODE SELECTION ===== -->
+  <section id="screen-mode" class="hidden">
+    <div class="back-row"><button class="btn secondary" id="backFromMode">&larr; Back to Topics</button></div>
+    <h2 id="modeTitle">Choose a Mode</h2>
+    <div class="mode-choices">
+      <button class="btn" id="startFlashcards">Study Flashcards</button>
+      <button class="btn" id="startQuiz">Take the Quiz</button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN: FLASHCARDS ===== -->
+  <section id="screen-flashcards" class="hidden">
+    <div class="back-row"><button class="btn secondary" id="backFromFlashcards">&larr; Back to Topics</button></div>
+    <div class="progress-label" id="flashProgress">Card 1 of 4</div>
+    <div class="progress-track"><div class="progress-fill" id="flashProgressFill"></div></div>
+    <div class="flip-viewport">
+      <div class="flip-card" id="flipCard">
+        <div class="flip-face front" id="flashFront"></div>
+        <div class="flip-face back" id="flashBack"></div>
+      </div>
+    </div>
+    <div class="card-hint">Click the card to flip it</div>
+    <div class="nav-row">
+      <button class="btn secondary" id="prevCard">Previous</button>
+      <button class="btn secondary" id="nextCard">Next</button>
+    </div>
+  </section>
+
+  <!-- ===== SCREEN: QUIZ ===== -->
+  <section id="screen-quiz" class="hidden">
+    <div class="back-row"><button class="btn secondary" id="backFromQuiz">&larr; Back to Topics</button></div>
+    <div class="progress-label" id="quizProgress">Question 1 of 4</div>
+    <div class="progress-track"><div class="progress-fill" id="quizProgressFill"></div></div>
+    <div class="question-box" id="quizQuestion"></div>
+    <div class="options-grid" id="quizOptions"></div>
+  </section>
+
+  <!-- ===== SCREEN: RESULTS ===== -->
+  <section id="screen-results" class="hidden">
+    <div class="results-wrap">
+      <h2>Quiz Complete</h2>
+      <div class="score-fraction" id="scoreFraction">0 / 4</div>
+      <div class="badge" id="scoreBadge"></div>
+      <div class="results-actions">
+        <button class="btn" id="tryAgainBtn">Try Again</button>
+        <button class="btn secondary" id="changeTopicBtn">Change Topic</button>
+      </div>
+      <a class="ad-banner-space" href="https://omg10.com/4/11871854" target="_blank" rel="noopener noreferrer">[ ADVERTISEMENT / STUDY BREAK ]</a>
+    </div>
+  </section>
+
+</div>
+
+<footer class="site-footer">
+  &copy; 2026 JASWANT NAYAK. All rights reserved.<br>
+  Designed and built by JASWANT NAYAK
+</footer>
+
+<script>
+/* ===================== CORE SYSTEM DATA OBJECT INDEX ===================== */
+var DB = [
+  // General Knowledge
+  {topic:"General Knowledge",question:"What is the capital of Japan?",options:["Seoul","Beijing","Tokyo","Bangkok"],answer:"Tokyo"},
+  {topic:"General Knowledge",question:"Which ocean is the largest on Earth?",options:["Atlantic","Indian","Arctic","Pacific"],answer:"Pacific"},
+  {topic:"General Knowledge",question:"Who painted the Mona Lisa?",options:["Da Vinci","Van Gogh","Picasso","Monet"],answer:"Da Vinci"},
+  {topic:"General Knowledge",question:"How many continents are there?",options:["5","6","7","8"],answer:"7"},
+
+  // General Math
+  {topic:"General Math",question:"What is 12 x 8?",options:["96","86","106","88"],answer:"96"},
+  {topic:"General Math",question:"What is the square root of 144?",options:["10","11","12","13"],answer:"12"},
+  {topic:"General Math",question:"What is 15% of 200?",options:["20","25","30","35"],answer:"30"},
+  {topic:"General Math",question:"Solve: 9 + 6 x 2",options:["30","21","24","27"],answer:"21"},
+
+  // General Science
+  {topic:"General Science",question:"What gas do plants absorb from the air?",options:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],answer:"Carbon Dioxide"},
+  {topic:"General Science",question:"What is the chemical symbol for water?",options:["H2O","O2","CO2","NaCl"],answer:"H2O"},
+  {topic:"General Science",question:"How many bones are in the adult human body?",options:["206","201","215","198"],answer:"206"},
+  {topic:"General Science",question:"What planet is known as the Red Planet?",options:["Venus","Mars","Jupiter","Saturn"],answer:"Mars"},
+
+  // Myth vs Facts
+  {topic:"Myth vs Facts",question:"True or False: Humans only use 10% of their brains.",options:["True","False","Only kids","Only at night"],answer:"False"},
+  {topic:"Myth vs Facts",question:"True or False: Goldfish have a 3-second memory.",options:["True","False","3 minutes","3 hours"],answer:"False"},
+  {topic:"Myth vs Facts",question:"True or False: Bulls become angry at the color red.",options:["True","False","Only in Spain","Only at cloth"],answer:"False"},
+  {topic:"Myth vs Facts",question:"True or False: Lightning never strikes the same place twice.",options:["True","False","Only in forests","Only in summer"],answer:"False"},
+
+  // Basic Rules, Regulations & Laws
+  {topic:"Basic Rules, Regulations & Laws",question:"In most countries, what side must pedestrians typically use a marked crosswalk for?",options:["Any side","Only right","Only left","Center line only"],answer:"Any side"},
+  {topic:"Basic Rules, Regulations & Laws",question:"What does a red traffic light universally mean?",options:["Slow down","Stop","Proceed with caution","Yield"],answer:"Stop"},
+  {topic:"Basic Rules, Regulations & Laws",question:"What is the minimum age typically required to sign a legally binding contract in most jurisdictions?",options:["16","18","21","25"],answer:"18"},
+  {topic:"Basic Rules, Regulations & Laws",question:"What legal document outlines a person's wishes for asset distribution after death?",options:["A deed","A will","A lease","A warranty"],answer:"A will"}
+];
+
+var CATEGORIES = [
+  {emoji:"\uD83C\uDF0D",name:"General Knowledge",color:"#dbeafe",accent:"#1a73e8"},
+  {emoji:"\uD83E\uDDEE",name:"General Math",color:"#ffe3d1",accent:"#ff7a3d"},
+  {emoji:"\uD83E\uDDEA",name:"General Science",color:"#dcf7e3",accent:"#2ea44f"},
+  {emoji:"\uD83E\uDD84",name:"Myth vs Facts",color:"#f2e2ff",accent:"#9b5de5"},
+  {emoji:"\u2696\uFE0F",name:"Basic Rules, Regulations & Laws",color:"#fff2cc",accent:"#e6a700"}
+];
+
+/* ===================== DARK MODE ===================== */
+var themeToggleBtn = document.getElementById("themeToggle");
+function applyTheme(isDark){
+  document.documentElement.classList.toggle("dark", isDark);
+  themeToggleBtn.textContent = isDark ? "\u2600\uFE0F" : "\uD83C\uDF19";
+}
+var savedTheme = null;
+try { savedTheme = localStorage.getItem("studyHubTheme"); } catch(e){}
+applyTheme(savedTheme === "dark");
+themeToggleBtn.addEventListener("click", function(){
+  var isDark = !document.documentElement.classList.contains("dark");
+  applyTheme(isDark);
+  try { localStorage.setItem("studyHubTheme", isDark ? "dark" : "light"); } catch(e){}
+});
+
+/* ===================== SHUFFLE UTILITY ===================== */
+function shuffleArray(arr){
+  var copy = arr.slice();
+  for (var i = copy.length - 1; i > 0; i--){
+    var j = Math.floor(Math.random() * (i + 1));
+    var temp = copy[i];
+    copy[i] = copy[j];
+    copy[j] = temp;
+  }
+  return copy;
+}
+
+/* ===================== STATE ===================== */
+var state = {
+  currentTopic:null,
+  items:[],
+  index:0,
+  score:0,
+  canAnswerQuiz:true
+};
+
+/* ===================== ELEMENT REFS ===================== */
+var screens = {
+  topics:document.getElementById("screen-topics"),
+  mode:document.getElementById("screen-mode"),
+  flashcards:document.getElementById("screen-flashcards"),
+  quiz:document.getElementById("screen-quiz"),
+  results:document.getElementById("screen-results")
+};
+
+function showScreen(name){
+  for (var key in screens){
+    if (screens.hasOwnProperty(key)){
+      screens[key].classList.add("hidden");
+    }
+  }
+  screens[name].classList.remove("hidden");
+}
+
+/* ===================== TOPIC GRID RENDER ===================== */
+function renderTopicGrid(){
+  var grid = document.getElementById("topicGrid");
+  grid.innerHTML = "";
+  for (var i = 0; i < CATEGORIES.length; i++){
+    (function(cat){
+      var tile = document.createElement("button");
+      tile.className = "topic-tile";
+      tile.style.setProperty("--tile-color", cat.color);
+      tile.style.setProperty("--tile-accent", cat.accent);
+      tile.innerHTML = "<span class='emoji'>" + cat.emoji + "</span>" + cat.name;
+      tile.addEventListener("click", function(){
+        selectTopic(cat.name);
+      });
+      grid.appendChild(tile);
+    })(CATEGORIES[i]);
+  }
+}
+
+function selectTopic(topicName){
+  state.currentTopic = topicName;
+  state.items = [];
+  for (var i = 0; i < DB.length; i++){
+    if (DB[i].topic === topicName){
+      state.items.push(DB[i]);
+    }
+  }
+  document.getElementById("modeTitle").textContent = topicName;
+  showScreen("mode");
+}
+
+/* ===================== FLASHCARD MODE ===================== */
+function startFlashcards(){
+  state.index = 0;
+  state.sessionItems = shuffleArray(state.items);
+  showScreen("flashcards");
+  renderFlashcard();
+}
+
+function renderFlashcard(){
+  var item = state.sessionItems[state.index];
+  var flipCard = document.getElementById("flipCard");
+  flipCard.classList.remove("is-flipped");
+  document.getElementById("flashFront").textContent = item.question;
+  document.getElementById("flashBack").textContent = item.answer;
+  document.getElementById("flashProgress").textContent =
+    "Card " + (state.index + 1) + " of " + state.sessionItems.length;
+  var pct = ((state.index + 1) / state.sessionItems.length) * 100;
+  document.getElementById("flashProgressFill").style.width = pct + "%";
+}
+
+document.getElementById("flipCard").addEventListener("click", function(){
+  this.classList.toggle("is-flipped");
+});
+
+document.getElementById("nextCard").addEventListener("click", function(){
+  state.index = (state.index + 1) % state.sessionItems.length;
+  renderFlashcard();
+});
+
+document.getElementById("prevCard").addEventListener("click", function(){
+  state.index = (state.index - 1 + state.sessionItems.length) % state.sessionItems.length;
+  renderFlashcard();
+});
+
+/* ===================== QUIZ MODE ===================== */
+function startQuiz(){
+  state.index = 0;
+  state.score = 0;
+  state.sessionItems = shuffleArray(state.items);
+  showScreen("quiz");
+  renderQuizQuestion();
+}
+
+function renderQuizQuestion(){
+  state.canAnswerQuiz = true;
+  var item = state.sessionItems[state.index];
+  document.getElementById("quizProgress").textContent =
+    "Question " + (state.index + 1) + " of " + state.sessionItems.length;
+  var pct = ((state.index + 1) / state.sessionItems.length) * 100;
+  document.getElementById("quizProgressFill").style.width = pct + "%";
+  document.getElementById("quizQuestion").textContent = item.question;
+
+  var optionsGrid = document.getElementById("quizOptions");
+  optionsGrid.innerHTML = "";
+
+  var shuffledOptions = shuffleArray(item.options);
+  var letters = ["A","B","C","D"];
+  for (var i = 0; i < shuffledOptions.length; i++){
+    (function(optionText, letter){
+      var optBtn = document.createElement("button");
+      optBtn.className = "option-btn";
+      optBtn.dataset.value = optionText;
+      optBtn.innerHTML = "<span class='opt-letter'>" + letter + "</span>" + optionText;
+      optBtn.addEventListener("click", function(){
+        handleQuizAnswer(optBtn, optionText, item.answer);
+      });
+      optionsGrid.appendChild(optBtn);
+    })(shuffledOptions[i], letters[i]);
+  }
+}
+
+function handleQuizAnswer(clickedBtn, chosenText, correctText){
+  if (!state.canAnswerQuiz){ return; }
+  state.canAnswerQuiz = false;
+
+  var allButtons = document.querySelectorAll("#quizOptions .option-btn");
+  for (var i = 0; i < allButtons.length; i++){
+    allButtons[i].disabled = true;
+  }
+
+  var isCorrect = (chosenText === correctText);
+  if (isCorrect){
+    clickedBtn.classList.add("correct");
+    state.score += 1;
+  } else {
+    clickedBtn.classList.add("incorrect");
+    for (var j = 0; j < allButtons.length; j++){
+      if (allButtons[j].dataset.value === correctText){
+        allButtons[j].classList.add("correct");
+      }
+    }
+  }
+
+  setTimeout(function(){
+    state.index += 1;
+    if (state.index < state.sessionItems.length){
+      renderQuizQuestion();
+    } else {
+      renderResults();
+    }
+  }, 1500);
+}
+
+/* ===================== RESULTS ENGINE ===================== */
+function renderResults(){
+  showScreen("results");
+  var total = state.sessionItems.length;
+  var pct = Math.floor((state.score / total) * 100);
+
+  document.getElementById("scoreFraction").textContent = state.score + " / " + total;
+
+  var badge = document.getElementById("scoreBadge");
+  badge.className = "badge";
+  if (pct >= 88){
+    badge.classList.add("green");
+    badge.textContent = pct + "% - Excellent Job! \uD83D\uDFE2";
+  } else if (pct >= 60){
+    badge.classList.add("gold");
+    badge.textContent = pct + "% - Good Effort! Try again to reach the top tier. \uD83D\uDFE1";
+  } else {
+    badge.classList.add("red");
+    badge.textContent = pct + "% - Keep Practicing! You've got this. \uD83D\uDD34";
+  }
+}
+
+/* ===================== NAVIGATION HOOKS ===================== */
+document.getElementById("startFlashcards").addEventListener("click", startFlashcards);
+document.getElementById("startQuiz").addEventListener("click", startQuiz);
+
+document.getElementById("backFromMode").addEventListener("click", function(){ showScreen("topics"); });
+document.getElementById("backFromFlashcards").addEventListener("click", function(){ showScreen("topics"); });
+document.getElementById("backFromQuiz").addEventListener("click", function(){ showScreen("topics"); });
+
+document.getElementById("tryAgainBtn").addEventListener("click", startQuiz);
+document.getElementById("changeTopicBtn").addEventListener("click", function(){ showScreen("topics"); });
+
+/* ===================== INIT ===================== */
+renderTopicGrid();
+showScreen("topics");
+</script>
+</body>
+</html>
