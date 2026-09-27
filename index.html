@@ -5,13 +5,27 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="google-site-verification" content="lvp_gLVyXP9e0hVMP0zDgAGOemDMNv-6C_9kPMIoPBY" />
 <meta name="msvalidate.01" content="D12C33DC1ABDA9355512F519036D0327" />
-<title>Multi-Topic Study Hub</title>
-<meta name="description" content="StudyHub - Your ultimate platform for study resources, notes, and learning tools.">
-<meta property="og:title" content="StudyHub">
-<meta property="og:description" content="Your ultimate platform for study resources, notes, and learning tools.">
-<meta property="og:url" content="https://studyhub-phzj.onrender.com/">
+<title>Multi-Topic Study Hub | Flashcards & Quizzes on Knowledge, Math, Science & More</title>
+<meta name="description" content="Free interactive study hub with flashcards and quizzes across General Knowledge, Math, Science, Myth vs Facts, and Basic Laws. Test yourself, track your score, and learn something new every day.">
+<meta name="keywords" content="study flashcards, online quiz, general knowledge quiz, math quiz, science quiz, trivia app, myth vs facts, learning app">
+<meta name="author" content="Jaswant Nayak">
+<link rel="canonical" href="https://studyhub-phzj.onrender.com/">
+
+<!-- Open Graph / Facebook -->
 <meta property="og:type" content="website">
+<meta property="og:url" content="https://studyhub-phzj.onrender.com/">
+<meta property="og:title" content="Multi-Topic Study Hub | Flashcards & Quizzes">
+<meta property="og:description" content="Free interactive study hub with flashcards and quizzes across Knowledge, Math, Science, Myths, and Laws. Test yourself and track your score.">
 <meta property="og:image" content="https://studyhub-phzj.onrender.com/preview-image.jpg.png">
+<meta property="og:site_name" content="Multi-Topic Study Hub">
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:url" content="https://studyhub-phzj.onrender.com/">
+<meta name="twitter:title" content="Multi-Topic Study Hub | Flashcards & Quizzes">
+<meta name="twitter:description" content="Free interactive study hub with flashcards and quizzes across Knowledge, Math, Science, Myths, and Laws.">
+<meta name="twitter:image" content="https://studyhub-phzj.onrender.com/preview-image.jpg.png">
+
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -63,8 +77,8 @@ h1,h2{font-family:"Poppins","Inter",sans-serif;}
   height:5px;
   background:linear-gradient(90deg,var(--accent),#6fa8ff,#ff8a65);
 }
-h1{font-size:1.6rem;margin:0 0 24px;text-align:center;}
-h2{font-size:1.3rem;margin:0 0 20px;}
+h1{font-size:1.6rem;margin:0 0 24px;text-align:center;padding:0 48px;}
+h2{font-size:1.3rem;margin:0 0 20px;padding-right:48px;}
 .hidden{display:none !important;}
 button{font-family:inherit;cursor:pointer;}
 .btn{
@@ -100,9 +114,18 @@ button{font-family:inherit;cursor:pointer;}
   text-align:center;
   font-size:1.05rem;
   font-weight:700;
+  box-shadow:0 3px 10px rgba(20,30,60,0.05);
   transition:border-color 0.2s ease,transform 0.18s ease,box-shadow 0.2s ease,background 0.2s ease;
   position:relative;
+  opacity:0;
+  animation:tileIn 0.45s ease forwards;
 }
+.topic-tile:nth-child(1){animation-delay:0.03s;}
+.topic-tile:nth-child(2){animation-delay:0.08s;}
+.topic-tile:nth-child(3){animation-delay:0.13s;}
+.topic-tile:nth-child(4){animation-delay:0.18s;}
+.topic-tile:nth-child(5){animation-delay:0.23s;}
+@keyframes tileIn{from{opacity:0;transform:translateY(10px);}to{opacity:1;transform:translateY(0);}}
 .topic-tile .emoji{
   display:flex;
   align-items:center;
@@ -122,6 +145,32 @@ button{font-family:inherit;cursor:pointer;}
   background:#fff;
 }
 .topic-tile:hover .emoji{transform:scale(1.12) rotate(-6deg);}
+.topic-tile:active{transform:scale(0.96);box-shadow:0 2px 6px rgba(20,30,60,0.08);}
+
+/* ===================== MOBILE-FIRST APP LAYOUT ===================== */
+@media (max-width:520px){
+  body{padding:16px 10px;}
+  .app-card{
+    padding:26px 16px 24px;
+    border-radius:20px;
+    background:#f7f9fc;
+    border:1px solid #dde3ec;
+    box-shadow:0 12px 30px rgba(20,30,60,0.16),0 2px 8px rgba(20,30,60,0.08);
+  }
+  h1{font-size:1.3rem;margin-bottom:18px;}
+  .topic-grid{grid-template-columns:1fr 1fr;gap:10px;}
+  .topic-tile{padding:16px 8px;font-size:0.85rem;border-radius:14px;background:#fff;}
+  .topic-tile .emoji{width:42px;height:42px;font-size:1.3rem;margin-bottom:6px;}
+  .options-grid{grid-template-columns:1fr;}
+  .mode-choices .btn{min-width:0;}
+}
+@media (max-width:520px){
+  html.dark .app-card{
+    background:#1b1f27;
+    border:1px solid #2d3340;
+  }
+  html.dark .topic-tile{background:#232833;}
+}
 
 /* ===================== MODE SCREEN ===================== */
 .mode-choices{display:flex;gap:16px;flex-wrap:wrap;}
