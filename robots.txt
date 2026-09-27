@@ -1,0 +1,3 @@
+User-agent: *
+Allow: /
+Sitemap: https://studyhub-phzj.onrender.com/sitemap.xml
