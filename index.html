@@ -37,7 +37,7 @@
   --bg:#f0f2f5;
   --accent:#1a73e8;
   --accent-dark:#0f5bc4;
-  --card-bg:#ffffff;
+  --card-bg:#edf1f8;
   --text:#20242c;
   --muted:#5f6b7a;
   --green:#2ea44f;
@@ -156,7 +156,7 @@ button{font-family:inherit;cursor:pointer;}
   .app-card{
     padding:26px 16px 24px;
     border-radius:20px;
-    background:#f7f9fc;
+    background:#edf1f8;
     border:1px solid #dde3ec;
     box-shadow:0 12px 30px rgba(20,30,60,0.16),0 2px 8px rgba(20,30,60,0.08);
   }
@@ -694,14 +694,23 @@ document.getElementById("flipCard").addEventListener("click", function(){
 });
 
 document.getElementById("nextCard").addEventListener("click", function(){
-  state.index = (state.index + 1) % state.sessionItems.length;
-  renderFlashcard();
+  if (state.index >= state.sessionItems.length - 1){
+    showScreen("flashcardsComplete");
+  } else {
+    state.index += 1;
+    renderFlashcard();
+  }
 });
 
 document.getElementById("prevCard").addEventListener("click", function(){
-  state.index = (state.index - 1 + state.sessionItems.length) % state.sessionItems.length;
-  renderFlashcard();
+  if (state.index > 0){
+    state.index -= 1;
+    renderFlashcard();
+  }
 });
+
+document.getElementById("studyAgainBtn").addEventListener("click", startFlashcards);
+document.getElementById("flashChangeTopicBtn").addEventListener("click", function(){ showScreen("topics"); });
 
 /* ===================== QUIZ MODE ===================== */
 function startQuiz(){
