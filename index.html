@@ -103,6 +103,7 @@ button{font-family:inherit;cursor:pointer;}
 .back-row{margin-bottom:20px;}
 
 /* ===================== TOPIC GRID ===================== */
+.loading-state{text-align:center;color:var(--muted);font-weight:600;padding:40px 0;}
 .topic-grid{
   display:grid;
   grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
@@ -327,6 +328,20 @@ button{font-family:inherit;cursor:pointer;}
   0%,100%{box-shadow:0 4px 14px rgba(255,107,107,0.45);}
   50%{box-shadow:0 4px 20px rgba(255,179,71,0.7);}
 }
+.ad-banner-space.ad-alt{
+  background:linear-gradient(135deg,#22d3ee,#8b5cf6);
+  box-shadow:0 4px 14px rgba(139,92,246,0.45);
+  animation:adPulseAlt 1.8s ease-in-out infinite;
+}
+.ad-banner-space.ad-alt:hover{
+  box-shadow:0 6px 18px rgba(139,92,246,0.6);
+}
+@keyframes adPulseAlt{
+  0%,100%{box-shadow:0 4px 14px rgba(139,92,246,0.45);}
+  50%{box-shadow:0 4px 20px rgba(34,211,238,0.7);}
+}
+.complete-icon{font-size:2.6rem;margin-bottom:6px;}
+.complete-sub{color:var(--muted);font-size:0.95rem;margin:0 0 20px;}
 
 .site-footer{
   max-width:800px;
@@ -336,6 +351,72 @@ button{font-family:inherit;cursor:pointer;}
   color:var(--muted);
   line-height:1.6;
 }
+.contact-link{
+  border:none;
+  background:none;
+  color:var(--accent);
+  font-size:0.8rem;
+  font-weight:600;
+  cursor:pointer;
+  padding:4px 8px;
+  margin-top:4px;
+  text-decoration:underline;
+}
+.contact-link:hover{color:var(--accent-dark);}
+
+/* ===================== CONTACT MODAL ===================== */
+.modal-overlay{
+  position:fixed;
+  inset:0;
+  background:rgba(15,20,30,0.55);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  padding:16px;
+  z-index:1000;
+}
+.modal-box{
+  width:100%;
+  max-width:420px;
+  background:var(--card-bg);
+  border-radius:16px;
+  padding:28px 24px 24px;
+  position:relative;
+  box-shadow:0 20px 50px rgba(0,0,0,0.3);
+  animation:resultsIn 0.3s ease;
+}
+.modal-close{
+  position:absolute;
+  top:12px;
+  right:14px;
+  border:none;
+  background:none;
+  font-size:1.4rem;
+  line-height:1;
+  color:var(--muted);
+  cursor:pointer;
+}
+.modal-close:hover{color:var(--text);}
+.modal-title{margin:0 0 16px;font-size:1.2rem;text-align:left;padding-right:0;}
+.form-label{display:block;font-size:0.85rem;font-weight:600;margin:12px 0 6px;color:var(--text);}
+.form-input{
+  width:100%;
+  border:2px solid #e3e7ee;
+  border-radius:8px;
+  padding:10px 12px;
+  font-size:0.95rem;
+  font-family:inherit;
+  color:var(--text);
+  background:#fff;
+  resize:vertical;
+}
+.form-input:focus{outline:none;border-color:var(--accent);}
+.contact-submit{width:100%;margin-top:16px;}
+.contact-status{margin-top:10px;font-size:0.85rem;text-align:center;min-height:1.2em;}
+.contact-status.success{color:var(--green);}
+.contact-status.error{color:var(--red);}
+html.dark .modal-box{box-shadow:0 20px 50px rgba(0,0,0,0.5);}
+html.dark .form-input{background:#232833;border-color:#333a46;color:var(--text);}
 
 /* ===================== DARK MODE TOGGLE ===================== */
 .theme-toggle{
@@ -393,7 +474,8 @@ html.dark .badge.red{background:#3a1416;}
   <!-- ===== SCREEN: TOPIC SELECTION ===== -->
   <section id="screen-topics">
     <h1>Select a Study Topic</h1>
-    <div class="topic-grid" id="topicGrid"></div>
+    <div id="loadingState" class="loading-state">Loading questions&hellip;</div>
+    <div class="topic-grid hidden" id="topicGrid"></div>
   </section>
 
   <!-- ===== SCREEN: MODE SELECTION ===== -->
@@ -424,6 +506,20 @@ html.dark .badge.red{background:#3a1416;}
     </div>
   </section>
 
+  <!-- ===== SCREEN: FLASHCARDS COMPLETE ===== -->
+  <section id="screen-flashcards-complete" class="hidden">
+    <div class="results-wrap">
+      <div class="complete-icon">🎉</div>
+      <h2>Flashcards Complete!</h2>
+      <p class="complete-sub">You've reviewed all 5 cards for this topic.</p>
+      <div class="results-actions">
+        <button class="btn" id="studyAgainBtn">Study Again</button>
+        <button class="btn secondary" id="flashChangeTopicBtn">Change Topic</button>
+      </div>
+      <a class="ad-banner-space ad-alt" href="https://omg10.com/4/11871854" target="_blank" rel="noopener noreferrer">[ ADVERTISEMENT / STUDY BREAK ]</a>
+    </div>
+  </section>
+
   <!-- ===== SCREEN: QUIZ ===== -->
   <section id="screen-quiz" class="hidden">
     <div class="back-row"><button class="btn secondary" id="backFromQuiz">&larr; Back to Topics</button></div>
@@ -451,42 +547,33 @@ html.dark .badge.red{background:#3a1416;}
 
 <footer class="site-footer">
   &copy; 2026 JASWANT NAYAK. All rights reserved.<br>
-  Designed and built by JASWANT NAYAK
+  Designed and built by JASWANT NAYAK<br>
+  <button type="button" class="contact-link" id="openContactModal">Contact</button>
 </footer>
 
+<!-- ===================== CONTACT MODAL ===================== -->
+<div class="modal-overlay hidden" id="contactOverlay">
+  <div class="modal-box">
+    <button type="button" class="modal-close" id="closeContactModal" aria-label="Close">&times;</button>
+    <h2 class="modal-title">Contact Us</h2>
+    <form id="contactForm">
+      <input type="hidden" name="access_key" value="a2837b3f-f94b-4d7b-bb71-8af5f98eceab">
+      <label class="form-label" for="contactName">Name</label>
+      <input class="form-input" type="text" id="contactName" name="name" required>
+      <label class="form-label" for="contactEmail">Email</label>
+      <input class="form-input" type="email" id="contactEmail" name="email" required>
+      <label class="form-label" for="contactMessage">Message</label>
+      <textarea class="form-input" id="contactMessage" name="message" rows="4" required></textarea>
+      <button type="submit" class="btn contact-submit" id="contactSubmitBtn">Send Message</button>
+      <div id="contactStatus" class="contact-status"></div>
+    </form>
+  </div>
+</div>
+
 <script>
-/* ===================== CORE SYSTEM DATA OBJECT INDEX ===================== */
-var DB = [
-  // General Knowledge
-  {topic:"General Knowledge",question:"What is the capital of Japan?",options:["Seoul","Beijing","Tokyo","Bangkok"],answer:"Tokyo"},
-  {topic:"General Knowledge",question:"Which ocean is the largest on Earth?",options:["Atlantic","Indian","Arctic","Pacific"],answer:"Pacific"},
-  {topic:"General Knowledge",question:"Who painted the Mona Lisa?",options:["Da Vinci","Van Gogh","Picasso","Monet"],answer:"Da Vinci"},
-  {topic:"General Knowledge",question:"How many continents are there?",options:["5","6","7","8"],answer:"7"},
-
-  // General Math
-  {topic:"General Math",question:"What is 12 x 8?",options:["96","86","106","88"],answer:"96"},
-  {topic:"General Math",question:"What is the square root of 144?",options:["10","11","12","13"],answer:"12"},
-  {topic:"General Math",question:"What is 15% of 200?",options:["20","25","30","35"],answer:"30"},
-  {topic:"General Math",question:"Solve: 9 + 6 x 2",options:["30","21","24","27"],answer:"21"},
-
-  // General Science
-  {topic:"General Science",question:"What gas do plants absorb from the air?",options:["Oxygen","Nitrogen","Carbon Dioxide","Hydrogen"],answer:"Carbon Dioxide"},
-  {topic:"General Science",question:"What is the chemical symbol for water?",options:["H2O","O2","CO2","NaCl"],answer:"H2O"},
-  {topic:"General Science",question:"How many bones are in the adult human body?",options:["206","201","215","198"],answer:"206"},
-  {topic:"General Science",question:"What planet is known as the Red Planet?",options:["Venus","Mars","Jupiter","Saturn"],answer:"Mars"},
-
-  // Myth vs Facts
-  {topic:"Myth vs Facts",question:"True or False: Humans only use 10% of their brains.",options:["True","False","Only kids","Only at night"],answer:"False"},
-  {topic:"Myth vs Facts",question:"True or False: Goldfish have a 3-second memory.",options:["True","False","3 minutes","3 hours"],answer:"False"},
-  {topic:"Myth vs Facts",question:"True or False: Bulls become angry at the color red.",options:["True","False","Only in Spain","Only at cloth"],answer:"False"},
-  {topic:"Myth vs Facts",question:"True or False: Lightning never strikes the same place twice.",options:["True","False","Only in forests","Only in summer"],answer:"False"},
-
-  // Basic Rules, Regulations & Laws
-  {topic:"Basic Rules, Regulations & Laws",question:"In most countries, what side must pedestrians typically use a marked crosswalk for?",options:["Any side","Only right","Only left","Center line only"],answer:"Any side"},
-  {topic:"Basic Rules, Regulations & Laws",question:"What does a red traffic light universally mean?",options:["Slow down","Stop","Proceed with caution","Yield"],answer:"Stop"},
-  {topic:"Basic Rules, Regulations & Laws",question:"What is the minimum age typically required to sign a legally binding contract in most jurisdictions?",options:["16","18","21","25"],answer:"18"},
-  {topic:"Basic Rules, Regulations & Laws",question:"What legal document outlines a person's wishes for asset distribution after death?",options:["A deed","A will","A lease","A warranty"],answer:"A will"}
-];
+/* ===================== CORE SYSTEM DATA (loaded via AJAX/API) ===================== */
+var DB = [];
+var QUESTIONS_LOADED = false;
 
 var CATEGORIES = [
   {emoji:"\uD83C\uDF0D",name:"General Knowledge",color:"#dbeafe",accent:"#1a73e8"},
@@ -537,6 +624,7 @@ var screens = {
   topics:document.getElementById("screen-topics"),
   mode:document.getElementById("screen-mode"),
   flashcards:document.getElementById("screen-flashcards"),
+  flashcardsComplete:document.getElementById("screen-flashcards-complete"),
   quiz:document.getElementById("screen-quiz"),
   results:document.getElementById("screen-results")
 };
@@ -584,7 +672,7 @@ function selectTopic(topicName){
 /* ===================== FLASHCARD MODE ===================== */
 function startFlashcards(){
   state.index = 0;
-  state.sessionItems = shuffleArray(state.items);
+  state.sessionItems = shuffleArray(state.items).slice(0, 5);
   showScreen("flashcards");
   renderFlashcard();
 }
@@ -619,7 +707,7 @@ document.getElementById("prevCard").addEventListener("click", function(){
 function startQuiz(){
   state.index = 0;
   state.score = 0;
-  state.sessionItems = shuffleArray(state.items);
+  state.sessionItems = shuffleArray(state.items).slice(0, 5);
   showScreen("quiz");
   renderQuizQuestion();
 }
@@ -717,9 +805,80 @@ document.getElementById("backFromQuiz").addEventListener("click", function(){ sh
 document.getElementById("tryAgainBtn").addEventListener("click", startQuiz);
 document.getElementById("changeTopicBtn").addEventListener("click", function(){ showScreen("topics"); });
 
-/* ===================== INIT ===================== */
-renderTopicGrid();
+/* ===================== CONTACT MODAL (Web3Forms AJAX) ===================== */
+var contactOverlay = document.getElementById("contactOverlay");
+var contactForm = document.getElementById("contactForm");
+var contactStatus = document.getElementById("contactStatus");
+var contactSubmitBtn = document.getElementById("contactSubmitBtn");
+
+document.getElementById("openContactModal").addEventListener("click", function(){
+  contactOverlay.classList.remove("hidden");
+});
+document.getElementById("closeContactModal").addEventListener("click", function(){
+  contactOverlay.classList.add("hidden");
+});
+contactOverlay.addEventListener("click", function(e){
+  if (e.target === contactOverlay){ contactOverlay.classList.add("hidden"); }
+});
+
+contactForm.addEventListener("submit", function(e){
+  e.preventDefault();
+  contactSubmitBtn.disabled = true;
+  contactStatus.className = "contact-status";
+  contactStatus.textContent = "Sending...";
+
+  var formData = new FormData(contactForm);
+  var payload = {};
+  formData.forEach(function(value, key){ payload[key] = value; });
+
+  fetch("https://api.web3forms.com/submit", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "Accept": "application/json" },
+    body: JSON.stringify(payload)
+  })
+    .then(function(response){ return response.json(); })
+    .then(function(result){
+      contactSubmitBtn.disabled = false;
+      if (result.success){
+        contactStatus.className = "contact-status success";
+        contactStatus.textContent = "Message sent! We'll get back to you soon.";
+        contactForm.reset();
+      } else {
+        contactStatus.className = "contact-status error";
+        contactStatus.textContent = "Something went wrong. Please try again.";
+      }
+    })
+    .catch(function(err){
+      contactSubmitBtn.disabled = false;
+      contactStatus.className = "contact-status error";
+      contactStatus.textContent = "Network error. Please try again.";
+      console.error("Contact form error:", err);
+    });
+});
+
+/* ===================== INIT (AJAX / API LOAD) ===================== */
+function loadQuestions(){
+  fetch("questions.json")
+    .then(function(response){
+      if (!response.ok){ throw new Error("Network response was not ok"); }
+      return response.json();
+    })
+    .then(function(data){
+      DB = data;
+      QUESTIONS_LOADED = true;
+      document.getElementById("loadingState").classList.add("hidden");
+      document.getElementById("topicGrid").classList.remove("hidden");
+      renderTopicGrid();
+    })
+    .catch(function(err){
+      document.getElementById("loadingState").textContent =
+        "Couldn't load questions. Please refresh the page.";
+      console.error("Failed to load questions.json:", err);
+    });
+}
+
 showScreen("topics");
+loadQuestions();
 </script>
 </body>
 </html>
