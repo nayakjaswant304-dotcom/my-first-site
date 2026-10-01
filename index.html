@@ -417,6 +417,14 @@ button{font-family:inherit;cursor:pointer;}
 .contact-status.error{color:var(--red);}
 html.dark .modal-box{box-shadow:0 20px 50px rgba(0,0,0,0.5);}
 html.dark .form-input{background:#232833;border-color:#333a46;color:var(--text);}
+.honeypot-field{
+  position:absolute;
+  left:-9999px;
+  width:1px;
+  height:1px;
+  opacity:0;
+  pointer-events:none;
+}
 
 /* ===================== DARK MODE TOGGLE ===================== */
 .theme-toggle{
@@ -560,6 +568,7 @@ html.dark .badge.red{background:#3a1416;}
     <h2 class="modal-title">Contact Us</h2>
     <form id="contactForm">
       <input type="hidden" name="access_key" value="a2837b3f-f94b-4d7b-bb71-8af5f98eceab">
+      <input type="text" name="website" id="honeypotField" class="honeypot-field" tabindex="-1" autocomplete="off" aria-hidden="true">
       <label class="form-label" for="contactName">Name</label>
       <input class="form-input" type="text" id="contactName" name="name" required>
       <label class="form-label" for="contactEmail">Email</label>
@@ -822,8 +831,12 @@ var contactForm = document.getElementById("contactForm");
 var contactStatus = document.getElementById("contactStatus");
 var contactSubmitBtn = document.getElementById("contactSubmitBtn");
 
+var honeypotField = document.getElementById("honeypotField");
+var contactModalOpenedAt = 0;
+
 document.getElementById("openContactModal").addEventListener("click", function(){
   contactOverlay.classList.remove("hidden");
+  contactModalOpenedAt = Date.now();
 });
 document.getElementById("closeContactModal").addEventListener("click", function(){
   contactOverlay.classList.add("hidden");
@@ -834,6 +847,23 @@ contactOverlay.addEventListener("click", function(e){
 
 contactForm.addEventListener("submit", function(e){
   e.preventDefault();
+
+  /* Spam check 1: honeypot field should always be empty for real users */
+  if (honeypotField.value !== ""){
+    contactStatus.className = "contact-status success";
+    contactStatus.textContent = "Message sent! We'll get back to you soon.";
+    contactForm.reset();
+    return;
+  }
+
+  /* Spam check 2: submissions faster than 3 seconds are almost always bots */
+  var elapsed = Date.now() - contactModalOpenedAt;
+  if (elapsed < 3000){
+    contactStatus.className = "contact-status error";
+    contactStatus.textContent = "Please take a moment to fill out the form.";
+    return;
+  }
+
   contactSubmitBtn.disabled = true;
   contactStatus.className = "contact-status";
   contactStatus.textContent = "Sending...";
