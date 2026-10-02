@@ -30,8 +30,18 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<script>(function(s){s.dataset.zone='11914332',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))</script>
+<link rel="preload" href="questions.json" as="fetch" crossorigin="anonymous">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap" media="print" onload="this.media='all'">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@700;800&family=Inter:wght@400;600;700&display=swap"></noscript>
+<script>
+/* Monetag vignette: loaded after the page finishes loading so it doesn't slow the quiz down.
+   To load it immediately again, replace this block with your original Monetag snippet. */
+window.addEventListener('load', function(){
+  setTimeout(function(){
+    (function(s){s.dataset.zone='11914332',s.src='https://n6wxm.com/vignette.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))
+  }, 1500);
+});
+</script>
 <style>
 /* ===================== GLOBAL THEME ===================== */
 :root{
@@ -282,6 +292,14 @@ button{font-family:inherit;cursor:pointer;}
 .option-btn.correct .opt-letter{background:rgba(255,255,255,0.3);color:#fff;}
 .option-btn.incorrect{background:var(--red);border-color:var(--red);color:#fff;animation:shakeWrong 0.4s ease;}
 .option-btn.incorrect .opt-letter{background:rgba(255,255,255,0.3);color:#fff;}
+.streak-wrap{min-height:36px;text-align:center;margin:-10px 0 12px;}
+.streak{display:inline-block;padding:6px 14px;border-radius:999px;background:#fff1e0;color:#c2410c;font-weight:700;font-size:0.9rem;}
+.streak.popA{animation:streakA 0.4s ease;}
+.streak.popB{animation:streakB 0.4s ease;}
+@keyframes streakA{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+@keyframes streakB{0%{transform:scale(1);}50%{transform:scale(1.15);}100%{transform:scale(1);}}
+.best-streak{display:block;width:fit-content;margin:-10px auto 24px;padding:6px 14px;border-radius:999px;background:#fff1e0;color:#c2410c;font-weight:700;font-size:0.9rem;}
+html.dark .streak,html.dark .best-streak{background:#3a2208;color:#fdba74;}
 @keyframes popCorrect{0%{transform:scale(1);}50%{transform:scale(1.05);}100%{transform:scale(1);}}
 @keyframes shakeWrong{0%,100%{transform:translateX(0);}25%{transform:translateX(-6px);}75%{transform:translateX(6px);}}
 
@@ -477,14 +495,14 @@ html.dark .badge.red{background:#3a1416;}
 </head>
 <body>
 <!-- ===================== APP CONTAINER ===================== -->
-<div class="app-card" id="appCard">
+<main class="app-card" id="appCard">
 <button id="themeToggle" class="theme-toggle" title="Toggle dark mode">🌙</button>
 
   <!-- ===== SCREEN: TOPIC SELECTION ===== -->
   <section id="screen-topics">
     <h1>Select a Study Topic</h1>
-    <div id="loadingState" class="loading-state">Loading questions&hellip;</div>
-    <div class="topic-grid hidden" id="topicGrid"></div>
+    <div id="loadingState" class="loading-state hidden" role="status"></div>
+    <div class="topic-grid" id="topicGrid"></div>
   </section>
 
   <!-- ===== SCREEN: MODE SELECTION ===== -->
@@ -534,6 +552,7 @@ html.dark .badge.red{background:#3a1416;}
     <div class="back-row"><button class="btn secondary" id="backFromQuiz">&larr; Back to Topics</button></div>
     <div class="progress-label" id="quizProgress">Question 1 of 4</div>
     <div class="progress-track"><div class="progress-fill" id="quizProgressFill"></div></div>
+    <div class="streak-wrap"><div class="streak hidden" id="streakBadge" aria-live="polite"></div></div>
     <div class="question-box" id="quizQuestion"></div>
     <div class="options-grid" id="quizOptions"></div>
   </section>
@@ -544,6 +563,7 @@ html.dark .badge.red{background:#3a1416;}
       <h2>Quiz Complete</h2>
       <div class="score-fraction" id="scoreFraction">0 / 4</div>
       <div class="badge" id="scoreBadge"></div>
+      <div class="best-streak hidden" id="bestStreak"></div>
       <div class="results-actions">
         <button class="btn" id="tryAgainBtn">Try Again</button>
         <button class="btn secondary" id="changeTopicBtn">Change Topic</button>
@@ -552,7 +572,7 @@ html.dark .badge.red{background:#3a1416;}
     </div>
   </section>
 
-</div>
+</main>
 
 <footer class="site-footer">
   &copy; 2026 JASWANT NAYAK. All rights reserved.<br>
@@ -672,6 +692,12 @@ function renderTopicGrid(){
 }
 
 function selectTopic(topicName){
+  if (!QUESTIONS_LOADED){
+    var ls = document.getElementById("loadingState");
+    ls.textContent = "Loading questions... tap a topic again in a moment.";
+    ls.classList.remove("hidden");
+    return;
+  }
   state.currentTopic = topicName;
   state.items = [];
   for (var i = 0; i < DB.length; i++){
@@ -727,10 +753,25 @@ document.getElementById("studyAgainBtn").addEventListener("click", startFlashcar
 document.getElementById("flashChangeTopicBtn").addEventListener("click", function(){ showScreen("topics"); });
 
 /* ===================== QUIZ MODE ===================== */
+var streakFlip = false;
+function updateStreak(){
+  var b = document.getElementById("streakBadge");
+  if (state.streak >= 2){
+    streakFlip = !streakFlip;
+    b.textContent = "\uD83D\uDD25 " + state.streak + " in a row!";
+    b.className = "streak " + (streakFlip ? "popA" : "popB");
+  } else {
+    b.className = "streak hidden";
+  }
+}
+
 function startQuiz(){
   state.index = 0;
   state.score = 0;
   state.sessionItems = shuffleArray(state.items).slice(0, 5);
+  state.streak = 0;
+  state.bestStreak = 0;
+  updateStreak();
   showScreen("quiz");
   renderQuizQuestion();
 }
@@ -776,14 +817,19 @@ function handleQuizAnswer(clickedBtn, chosenText, correctText){
   if (isCorrect){
     clickedBtn.classList.add("correct");
     state.score += 1;
+    state.streak += 1;
+    if (state.streak > state.bestStreak){ state.bestStreak = state.streak; }
   } else {
     clickedBtn.classList.add("incorrect");
+    state.streak = 0;
     for (var j = 0; j < allButtons.length; j++){
       if (allButtons[j].dataset.value === correctText){
         allButtons[j].classList.add("correct");
       }
     }
   }
+
+  updateStreak();
 
   setTimeout(function(){
     state.index += 1;
@@ -802,6 +848,14 @@ function renderResults(){
   var pct = Math.floor((state.score / total) * 100);
 
   document.getElementById("scoreFraction").textContent = state.score + " / " + total;
+
+  var bs = document.getElementById("bestStreak");
+  if (state.bestStreak >= 2){
+    bs.textContent = "\uD83D\uDD25 Best streak: " + state.bestStreak + " in a row";
+    bs.classList.remove("hidden");
+  } else {
+    bs.classList.add("hidden");
+  }
 
   var badge = document.getElementById("scoreBadge");
   badge.className = "badge";
@@ -911,16 +965,16 @@ function loadQuestions(){
       DB = data;
       QUESTIONS_LOADED = true;
       document.getElementById("loadingState").classList.add("hidden");
-      document.getElementById("topicGrid").classList.remove("hidden");
-      renderTopicGrid();
     })
     .catch(function(err){
-      document.getElementById("loadingState").textContent =
-        "Couldn't load questions. Please refresh the page.";
+      var ls = document.getElementById("loadingState");
+      ls.classList.remove("hidden");
+      ls.textContent = "Couldn't load questions. Please refresh the page.";
       console.error("Failed to load questions.json:", err);
     });
 }
 
+renderTopicGrid();
 showScreen("topics");
 loadQuestions();
 </script>
